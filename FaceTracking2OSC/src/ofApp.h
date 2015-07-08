@@ -28,6 +28,7 @@ private:
     ofxLabel uiHost;
     ofxLabel uiPort;
     ofxIntSlider scaleFactor;
+    ofxFloatSlider smoothFactor;
     ofxIntSlider finderMinWidth;
     ofxIntSlider finderMinHeight;
 };

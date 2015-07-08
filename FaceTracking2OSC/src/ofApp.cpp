@@ -16,6 +16,7 @@ void ofApp::setup(){
     gui.add(uiHost.setup("oscHost", "127.0.0.1"));
     gui.add(uiPort.setup("oscPort", ofToString(12000)));
     gui.add(scaleFactor.setup("scaleFactor", 4, 1, 8));
+    gui.add(smoothFactor.setup("smoothFactor", 0.2, 0, 1));
     gui.add(finderMinWidth.setup("finderMinWidth", 0, 0, 200));
     gui.add(finderMinHeight.setup("finderMinHeight", 0, 0, 200));
     
@@ -48,11 +49,12 @@ void ofApp::update(){
         
         // Update face position
         if(finder.blobs.size() != 0){
+            ofRectangle oldFace = face;
             face = finder.blobs[0].boundingRect;
-            face.set(face.getTopLeft().x * scaleFactor,
-                     face.getTopLeft().y * scaleFactor,
-                     face.getWidth() * scaleFactor,
-                     face.getHeight() * scaleFactor);
+            face.set(smoothFactor * oldFace.getTopLeft().x + (1-smoothFactor) * (face.getTopLeft().x * scaleFactor),
+                     smoothFactor * oldFace.getTopLeft().y + (1-smoothFactor) * (face.getTopLeft().y * scaleFactor),
+                     smoothFactor * oldFace.getWidth() + (1-smoothFactor) * (face.getWidth() * scaleFactor),
+                     smoothFactor * oldFace.getHeight() + (1-smoothFactor) * (face.getHeight() * scaleFactor));
         }
 	}
     
