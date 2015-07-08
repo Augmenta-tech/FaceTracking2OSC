@@ -136,18 +136,18 @@ void ofApp::update(){
     m.addIntArg(pid);       // pid
     m.addIntArg(0);         // oid
     m.addIntArg(age);       // age
-    m.addFloatArg(0);       // centroid.x
-    m.addFloatArg(0);       // centroid.y
-    m.addFloatArg(0);       // velocity.x
-    m.addFloatArg(0);       // velocity.y
-    m.addFloatArg(0);       // depth
-    m.addFloatArg(0);       // boundingRect.x
-    m.addFloatArg(0);       // boundingRect.y
-    m.addFloatArg(0);       // boundingRect.width
-    m.addFloatArg(0);       // boundingRect.height
-    m.addFloatArg(0);       // highest.x
-    m.addFloatArg(0);       // highest.y
-    m.addFloatArg(0);       // highest.z
+    m.addFloatArg(face.getCenter().x);                              // centroid.x
+    m.addFloatArg(1.0 - face.getHeight());                          // centroid.y
+    m.addFloatArg(face.getCenter().x - oldFace.getCenter().x);      // velocity.x
+    m.addFloatArg(1.0 - (face.getHeight() - oldFace.getHeight()));  // velocity.y
+    m.addFloatArg(face.getCenter().y);                              // depth
+    m.addFloatArg(face.getTopLeft().x);                             // boundingRect.x
+    m.addFloatArg(1.0 - face.getHeight());                          // boundingRect.y
+    m.addFloatArg(face.getWidth());                                 // boundingRect.width
+    m.addFloatArg(face.getHeight());                                // boundingRect.height
+    m.addFloatArg(face.getCenter().x);                              // highest.x
+    m.addFloatArg(1.0 - face.getHeight());                          // highest.y
+    m.addFloatArg(face.getCenter().y);                              // highest.z
     sender.sendMessage(m);
 }
 
