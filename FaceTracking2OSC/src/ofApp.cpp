@@ -54,6 +54,10 @@ void ofApp::update(){
 		// Update face position
         if(finder.blobs.size() != 0){
             face = finder.blobs[0].boundingRect;
+            face.set(face.getTopLeft().x * scaleFactor,
+                     face.getTopLeft().y * scaleFactor,
+                     face.getWidth() * scaleFactor,
+                     face.getHeight() * scaleFactor);
         }
 		
 	}
@@ -93,10 +97,7 @@ void ofApp::draw(){
     
     cam.draw(0, 0, CAM_WIDTH, CAM_HEIGHT);
     
-	for(unsigned int i = 0; i < finder.blobs.size(); i++) {
-		ofRectangle cur = finder.blobs[i].boundingRect;
-		ofRect(cur.x * scaleFactor, cur.y * scaleFactor, cur.width * scaleFactor, cur.height * scaleFactor);
-	}
+    ofRect(face.getTopLeft().x, face.getTopLeft().y, face.getWidth(), face.getHeight());
     
 	// Draw FinalPoint 
 	finalPointDraw();
