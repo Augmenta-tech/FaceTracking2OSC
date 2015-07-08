@@ -17,6 +17,7 @@ void ofApp::setup(){
     gui.add(uiPort.setup("oscPort", ofToString(12000)));
     gui.add(scaleFactor.setup("scaleFactor", 4, 1, 8));
     gui.add(smoothFactor.setup("smoothFactor", 0.2, 0, 1));
+    gui.add(threshold.setup("threshold", 2, 0, 40));
     gui.add(finderMinWidth.setup("finderMinWidth", 0, 0, 200));
     gui.add(finderMinHeight.setup("finderMinHeight", 0, 0, 200));
     
@@ -50,11 +51,24 @@ void ofApp::update(){
         // Update face position
         if(finder.blobs.size() != 0){
             ofRectangle oldFace = face;
-            face = finder.blobs[0].boundingRect;
-            face.set(smoothFactor * oldFace.getTopLeft().x + (1-smoothFactor) * (face.getTopLeft().x * scaleFactor),
-                     smoothFactor * oldFace.getTopLeft().y + (1-smoothFactor) * (face.getTopLeft().y * scaleFactor),
-                     smoothFactor * oldFace.getWidth() + (1-smoothFactor) * (face.getWidth() * scaleFactor),
-                     smoothFactor * oldFace.getHeight() + (1-smoothFactor) * (face.getHeight() * scaleFactor));
+            ofRectangle newFace = finder.blobs[0].boundingRect;
+            
+            float x = oldFace.getTopLeft().x;
+            float y = oldFace.getTopLeft().y;
+            float width = oldFace.getWidth();
+            float height = oldFace.getHeight();
+            
+            // Threshold ignore new position if it has not changed enough
+            if(abs(x-newFace.getTopLeft().x*scaleFactor)    > threshold) x = newFace.getTopLeft().x*scaleFactor;
+            if(abs(y-newFace.getTopLeft().y*scaleFactor)    > threshold) y = newFace.getTopLeft().y*scaleFactor;
+            if(abs(width-newFace.getWidth()*scaleFactor)    > threshold) width = newFace.getWidth()*scaleFactor;
+            if(abs(height-newFace.getHeight()*scaleFactor)  > threshold) height = newFace.getHeight()*scaleFactor;
+            
+            // Exponential smooth on new position
+            face.set(smoothFactor * oldFace.getTopLeft().x + (1-smoothFactor) * x,
+                     smoothFactor * oldFace.getTopLeft().y + (1-smoothFactor) * y,
+                     smoothFactor * oldFace.getWidth() + (1-smoothFactor) * width,
+                     smoothFactor * oldFace.getHeight() + (1-smoothFactor) * height);
         }
 	}
     
