@@ -13,11 +13,18 @@ public:
 	void exit();
 
 private:
+    int pid;
+    int age;
+    
     ofxCvHaarFinder finder;
     ofVideoGrabber cam;
     
     ofRectangle face;
     ofRectangle oldFace;
+    
+    int blobsNum;
+    enum trackingState{ PERSON_ENTERED, PERSON_UPDATED, PERSON_LEFT};
+    trackingState trackingState;
     
     ofxOscSender sender;
     string host;

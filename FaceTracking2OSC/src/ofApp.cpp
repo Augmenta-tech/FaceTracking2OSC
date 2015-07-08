@@ -17,8 +17,7 @@ void ofApp::setup(){
     gui.add(uiPort.setup("oscPort", ofToString(12000)));
     gui.add(scaleFactor.setup("scaleFactor", 4, 1, 8));
     gui.add(smoothFactor.setup("smoothFactor", 0.2, 0, 1));
-    gui.add(threshold.setup("threshold", 2, 0, 40));
-    gui.add(threshold.setup("threshold", 0.2, 0, 1));
+    gui.add(threshold.setup("threshold", 0.2, 0, 0.1));
     gui.add(finderMinWidth.setup("finderMinWidth", 0, 0, 200));
     gui.add(finderMinHeight.setup("finderMinHeight", 0, 0, 200));
     
@@ -33,6 +32,8 @@ void ofApp::setup(){
     sender.setup(host, port);
     
     // Setup other variables
+    pid = 0;
+    age = 0;
     face.set(0, 0, 0, 0);
     oldFace.set(0, 0, 0, 0);
 }
@@ -52,6 +53,28 @@ void ofApp::update(){
         img.resize(CAM_WIDTH/scaleFactor, CAM_HEIGHT/scaleFactor);
         // Find face
         finder.findHaarObjects(img, finderMinWidth/scaleFactor, finderMinHeight/scaleFactor);
+        
+        // Augmenta-like behavior : get state to send in OSC
+        // Person entered
+        if(blobsNum == 0 && finder.blobs.size() != 0){
+            //std::cout << "Person entered" << std::endl;
+            trackingState = PERSON_ENTERED;
+            pid++;
+            age = 0;
+        }
+        // Person updated
+        else if(blobsNum != 0 && finder.blobs.size() != 0){
+            //std::cout << "Person updated" << std::endl;
+            trackingState = PERSON_UPDATED;
+            age++;
+        }
+        // Person left
+        else if(blobsNum != 0 && finder.blobs.size() == 0){
+            //std::cout << "Person left" << std::endl;
+            trackingState = PERSON_LEFT;
+        }
+        // Update number of blobs
+        blobsNum = finder.blobs.size();
         
         // Update face position
         if(finder.blobs.size() != 0){
@@ -90,6 +113,41 @@ void ofApp::update(){
     m.addFloatArg(face.getCenter().y);
     m.addFloatArg(face.getWidth());
     m.addFloatArg(face.getHeight());
+    sender.sendMessage(m);
+    
+    // Send Augmenta-simulated data
+    m.clear();
+    switch(trackingState){
+        case PERSON_ENTERED:
+            m.setAddress("/au/personEntered");
+            break;
+            
+        case PERSON_UPDATED:
+            m.setAddress("/au/personUpdated");
+            break;
+            
+        case PERSON_LEFT:
+            m.setAddress("/au/personWillLeave");
+            break;
+            
+        default:
+            break;
+    }
+    m.addIntArg(pid);       // pid
+    m.addIntArg(0);         // oid
+    m.addIntArg(age);       // age
+    m.addFloatArg(0);       // centroid.x
+    m.addFloatArg(0);       // centroid.y
+    m.addFloatArg(0);       // velocity.x
+    m.addFloatArg(0);       // velocity.y
+    m.addFloatArg(0);       // depth
+    m.addFloatArg(0);       // boundingRect.x
+    m.addFloatArg(0);       // boundingRect.y
+    m.addFloatArg(0);       // boundingRect.width
+    m.addFloatArg(0);       // boundingRect.height
+    m.addFloatArg(0);       // highest.x
+    m.addFloatArg(0);       // highest.y
+    m.addFloatArg(0);       // highest.z
     sender.sendMessage(m);
 }
 
