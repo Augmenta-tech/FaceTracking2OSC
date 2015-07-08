@@ -41,6 +41,8 @@ class ofApp : public ofBaseApp{
 	ofxLabel uiFinalPointY;
 	ofxLabel uiFinalPointZ;
     ofxIntSlider scaleFactor;
+    ofxFloatSlider smoothFactor;
+    ofxFloatSlider threshold;
     ofxIntSlider finderMinWidth;
     ofxIntSlider finderMinHeight;
 	ofxIntSlider finderAntiShacking;
