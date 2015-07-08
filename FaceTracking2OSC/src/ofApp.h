@@ -11,11 +11,16 @@ public:
     void update();
     void draw();
 	void exit();
+	float getZFromOfRect(ofRectangle rect);
+	void finalPointDraw();
+	void finalPointUpdate();
+
+
 
 private:
     ofxCvHaarFinder finder;
     ofVideoGrabber cam;
-    
+    ofVec3f finalPoint;
     ofRectangle face;
     
     ofxOscSender sender;
@@ -30,4 +35,5 @@ private:
     ofxIntSlider scaleFactor;
     ofxIntSlider finderMinWidth;
     ofxIntSlider finderMinHeight;
+	
 };

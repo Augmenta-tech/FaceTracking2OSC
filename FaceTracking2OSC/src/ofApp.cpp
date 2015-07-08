@@ -2,6 +2,7 @@
 
 #define CAM_WIDTH  640
 #define CAM_HEIGHT 480
+#define MOYENNAGE 10
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -9,6 +10,8 @@ void ofApp::setup(){
     finder.setup("haarcascade_frontalface_default.xml");
     // Setup camera
     cam.initGrabber(CAM_WIDTH, CAM_HEIGHT);
+	// Setup FinalPoint
+	finalPoint=ofVec3f(0.0f,0.0f,0.0f);
     
     // Setup GUI with default parameters
     gui.setup();
@@ -46,10 +49,13 @@ void ofApp::update(){
         // Find face
         finder.findHaarObjects(img, finderMinWidth/scaleFactor, finderMinHeight/scaleFactor);
         
-        // Update face position
+		finalPointUpdate();
+        
+		// Update face position
         if(finder.blobs.size() != 0){
             face = finder.blobs[0].boundingRect;
         }
+		
 	}
     
     // Send face position to osc
@@ -60,6 +66,25 @@ void ofApp::update(){
     m.addFloatArg(face.getWidth() / (float)CAM_WIDTH);
     m.addFloatArg(face.getHeight() / (float)CAM_HEIGHT);
     sender.sendMessage(m);
+}
+
+void ofApp::finalPointUpdate()
+{
+    if(finder.blobs.size()>=1)
+    {
+		ofVec3f tempPoint(finder.blobs[0].centroid.x*scaleFactor,finder.blobs[0].centroid.y*scaleFactor,
+			getZFromOfRect(finder.blobs[0].boundingRect)*scaleFactor);
+		if(tempPoint.distance(finalPoint)>MOYENNAGE)
+		{	
+			finalPoint.x=finder.blobs[0].centroid.x*scaleFactor;
+			finalPoint.y=finder.blobs[0].centroid.y*scaleFactor;
+			finalPoint.z=getZFromOfRect(finder.blobs[0].boundingRect)*scaleFactor;
+		}
+	}
+	else
+	{
+		finalPoint=ofVec3f(0.0f,0.0f,0.0f);
+	}
 }
 
 //--------------------------------------------------------------
@@ -73,12 +98,32 @@ void ofApp::draw(){
 		ofRect(cur.x * scaleFactor, cur.y * scaleFactor, cur.width * scaleFactor, cur.height * scaleFactor);
 	}
     
+	// Draw FinalPoint 
+	finalPointDraw();
+
     // Draw GUI
     uiFramerate.setup("FPS", framerate);
     gui.draw();
 }
 
+
+void ofApp::finalPointDraw()
+{  
+	ofSetColor(255,0,0);
+	ofFill();
+    std::cout	<< "Point final:   x="<< finalPoint.x << " y= " << finalPoint.y 
+				<< " z= " << finalPoint.z << std::endl;
+    ofCircle(finalPoint.x,finalPoint.y,10);
+	ofNoFill();
+	ofSetColor(255,255,255);
+}
+
 //--------------------------------------------------------------
 void ofApp::exit(){
 	gui.saveToFile("autosave.xml");
+}
+
+float ofApp::getZFromOfRect(ofRectangle rect)
+{
+	return (rect.getWidth()+rect.getHeight())/2.0f;
 }
