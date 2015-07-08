@@ -9,17 +9,25 @@ void ofApp::setup(){
     finder.setup("haarcascade_frontalface_default.xml");
     // Setup camera
     cam.initGrabber(CAM_WIDTH, CAM_HEIGHT);
-    // Setup OSC sender
-    host = "127.0.0.1";
-    port = 12000;
-    sender.setup(host, port);
     
-    // Setup GUI
+    // Setup GUI with default parameters
     gui.setup();
     gui.add(uiFramerate.setup("FPS", framerate));
+    gui.add(uiHost.setup("oscHost", "127.0.0.1"));
+    gui.add(uiPort.setup("oscPort", ofToString(12000)));
     gui.add(scaleFactor.setup("scaleFactor", 4, 1, 8));
     gui.add(finderMinWidth.setup("finderMinWidth", 0, 0, 200));
     gui.add(finderMinHeight.setup("finderMinHeight", 0, 0, 200));
+    
+    // Load autosave (replace default parameters if file exists)
+    if(ofFile::doesFileExist("autosave.xml")){
+        gui.loadFromFile("autosave.xml");
+    }
+    
+    // Setup OSC sender with parameters defined above in GUI
+    host = uiHost.getParameter().toString();
+    port = ofToInt(uiPort.getParameter().toString());
+    sender.setup(host, port);
 }
 
 //--------------------------------------------------------------
@@ -68,4 +76,9 @@ void ofApp::draw(){
     // Draw GUI
     uiFramerate.setup("FPS", framerate);
     gui.draw();
+}
+
+//--------------------------------------------------------------
+void ofApp::exit(){
+	gui.saveToFile("autosave.xml");
 }

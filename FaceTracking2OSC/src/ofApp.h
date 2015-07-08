@@ -9,7 +9,8 @@ class ofApp : public ofBaseApp{
 public:
     void setup();
     void update();
-    void draw();	
+    void draw();
+	void exit();
 
 private:
     ofxCvHaarFinder finder;
@@ -24,6 +25,8 @@ private:
     ofxPanel gui;
     string framerate;
     ofxLabel uiFramerate;
+    ofxLabel uiHost;
+    ofxLabel uiPort;
     ofxIntSlider scaleFactor;
     ofxIntSlider finderMinWidth;
     ofxIntSlider finderMinHeight;
