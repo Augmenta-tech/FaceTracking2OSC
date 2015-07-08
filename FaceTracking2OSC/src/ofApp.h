@@ -17,6 +17,7 @@ private:
     ofVideoGrabber cam;
     
     ofRectangle face;
+    ofRectangle oldFace;
     
     ofxOscSender sender;
     string host;

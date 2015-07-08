@@ -18,6 +18,7 @@ void ofApp::setup(){
     gui.add(scaleFactor.setup("scaleFactor", 4, 1, 8));
     gui.add(smoothFactor.setup("smoothFactor", 0.2, 0, 1));
     gui.add(threshold.setup("threshold", 2, 0, 40));
+    gui.add(threshold.setup("threshold", 0.2, 0, 1));
     gui.add(finderMinWidth.setup("finderMinWidth", 0, 0, 200));
     gui.add(finderMinHeight.setup("finderMinHeight", 0, 0, 200));
     
@@ -30,6 +31,10 @@ void ofApp::setup(){
     host = uiHost.getParameter().toString();
     port = ofToInt(uiPort.getParameter().toString());
     sender.setup(host, port);
+    
+    // Setup other variables
+    face.set(0, 0, 0, 0);
+    oldFace.set(0, 0, 0, 0);
 }
 
 //--------------------------------------------------------------
@@ -50,8 +55,14 @@ void ofApp::update(){
         
         // Update face position
         if(finder.blobs.size() != 0){
-            ofRectangle oldFace = face;
+            oldFace = face;
             ofRectangle newFace = finder.blobs[0].boundingRect;
+            
+            // Face data are set between 0 and 1
+            newFace.set((float)newFace.getTopLeft().x / ((float)CAM_WIDTH / (float)scaleFactor),
+                        (float)newFace.getTopLeft().y / ((float)CAM_HEIGHT / (float)scaleFactor),
+                        (float)newFace.getWidth() / ((float)CAM_WIDTH / (float)scaleFactor),
+                        (float)newFace.getHeight() / ((float)CAM_HEIGHT / (float)scaleFactor));
             
             float x = oldFace.getTopLeft().x;
             float y = oldFace.getTopLeft().y;
@@ -59,10 +70,10 @@ void ofApp::update(){
             float height = oldFace.getHeight();
             
             // Threshold ignore new position if it has not changed enough
-            if(abs(x-newFace.getTopLeft().x*scaleFactor)    > threshold) x = newFace.getTopLeft().x*scaleFactor;
-            if(abs(y-newFace.getTopLeft().y*scaleFactor)    > threshold) y = newFace.getTopLeft().y*scaleFactor;
-            if(abs(width-newFace.getWidth()*scaleFactor)    > threshold) width = newFace.getWidth()*scaleFactor;
-            if(abs(height-newFace.getHeight()*scaleFactor)  > threshold) height = newFace.getHeight()*scaleFactor;
+            if(abs(x-newFace.getTopLeft().x)    > threshold) x = newFace.getTopLeft().x;
+            if(abs(y-newFace.getTopLeft().y)    > threshold) y = newFace.getTopLeft().y;
+            if(abs(width-newFace.getWidth())    > threshold) width = newFace.getWidth();
+            if(abs(height-newFace.getHeight())  > threshold) height = newFace.getHeight();
             
             // Exponential smooth on new position
             face.set(smoothFactor * oldFace.getTopLeft().x + (1-smoothFactor) * x,
@@ -75,10 +86,10 @@ void ofApp::update(){
     // Send face position to osc
     ofxOscMessage m;
     m.setAddress("/head");
-    m.addFloatArg(face.getCenter().x / (float)CAM_WIDTH);
-    m.addFloatArg(face.getCenter().y / (float)CAM_HEIGHT);
-    m.addFloatArg(face.getWidth() / (float)CAM_WIDTH);
-    m.addFloatArg(face.getHeight() / (float)CAM_HEIGHT);
+    m.addFloatArg(face.getCenter().x);
+    m.addFloatArg(face.getCenter().y);
+    m.addFloatArg(face.getWidth());
+    m.addFloatArg(face.getHeight());
     sender.sendMessage(m);
 }
 
@@ -88,8 +99,13 @@ void ofApp::draw(){
     
     cam.draw(0, 0, CAM_WIDTH, CAM_HEIGHT);
     
-    ofRect(face.getTopLeft().x, face.getTopLeft().y, face.getWidth(), face.getHeight());
-    
+    if(finder.blobs.size() != 0){
+        ofRect(face.getTopLeft().x * CAM_WIDTH,
+               face.getTopLeft().y * CAM_HEIGHT,
+               face.getWidth() * CAM_WIDTH,
+               face.getHeight() * CAM_HEIGHT);
+    }
+        
     // Draw GUI
     uiFramerate.setup("FPS", framerate);
     gui.draw();
