@@ -2,7 +2,7 @@
 
 #define CAM_WIDTH  640
 #define CAM_HEIGHT 480
-#define MOYENNAGE 10
+
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -21,7 +21,11 @@ void ofApp::setup(){
     gui.add(scaleFactor.setup("scaleFactor", 4, 1, 8));
     gui.add(finderMinWidth.setup("finderMinWidth", 0, 0, 200));
     gui.add(finderMinHeight.setup("finderMinHeight", 0, 0, 200));
-    
+	gui.add(finderAntiShacking.setup("antiShacking",0,0,20));
+	gui.add(uiFinalPointX.setup("X = ", finalPointX));
+	gui.add(uiFinalPointY.setup("Y = ", finalPointY));
+	gui.add(uiFinalPointZ.setup("Z = ", finalPointZ));
+
     // Load autosave (replace default parameters if file exists)
     if(ofFile::doesFileExist("autosave.xml")){
         gui.loadFromFile("autosave.xml");
@@ -50,6 +54,10 @@ void ofApp::update(){
         finder.findHaarObjects(img, finderMinWidth/scaleFactor, finderMinHeight/scaleFactor);
         
 		finalPointUpdate();
+		finalPointX = ofToString(finalPoint.x);
+		finalPointY = ofToString(finalPoint.y);
+		finalPointZ = ofToString(finalPoint.z);
+		
         
 		// Update face position
         if(finder.blobs.size() != 0){
@@ -76,9 +84,9 @@ void ofApp::finalPointUpdate()
 {
     if(finder.blobs.size()>=1)
     {
-		ofVec3f tempPoint(finder.blobs[0].centroid.x*scaleFactor,finder.blobs[0].centroid.y*scaleFactor,
-			getZFromOfRect(finder.blobs[0].boundingRect)*scaleFactor);
-		if(tempPoint.distance(finalPoint)>MOYENNAGE)
+		ofVec3f tempPoint(finder.blobs[0].centroid.x*scaleFactor, finder.blobs[0].centroid.y*scaleFactor,
+							getZFromOfRect(finder.blobs[0].boundingRect)*scaleFactor);
+		if(tempPoint.distance(finalPoint)>finderAntiShacking)
 		{	
 			finalPoint.x=finder.blobs[0].centroid.x*scaleFactor;
 			finalPoint.y=finder.blobs[0].centroid.y*scaleFactor;
@@ -87,7 +95,7 @@ void ofApp::finalPointUpdate()
 	}
 	else
 	{
-		finalPoint=ofVec3f(0.0f,0.0f,0.0f);
+		//finalPoint=ofVec3f(0.0f,0.0f,0.0f);
 	}
 }
 
@@ -103,6 +111,9 @@ void ofApp::draw(){
 	finalPointDraw();
 
     // Draw GUI
+	uiFinalPointX.setup("X = ", finalPointX);
+	uiFinalPointY.setup("Y = ", finalPointY);
+	uiFinalPointZ.setup("Z = ", finalPointZ);
     uiFramerate.setup("FPS", framerate);
     gui.draw();
 }
@@ -112,8 +123,6 @@ void ofApp::finalPointDraw()
 {  
 	ofSetColor(255,0,0);
 	ofFill();
-    std::cout	<< "Point final:   x="<< finalPoint.x << " y= " << finalPoint.y 
-				<< " z= " << finalPoint.z << std::endl;
     ofCircle(finalPoint.x,finalPoint.y,10);
 	ofNoFill();
 	ofSetColor(255,255,255);
