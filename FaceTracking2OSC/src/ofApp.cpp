@@ -1,4 +1,5 @@
 #include "ofApp.h"
+#include "ofAppBaseWindow.h"
 
 #define CAM_WIDTH  640
 #define CAM_HEIGHT 480
@@ -8,8 +9,35 @@
 void ofApp::setup(){
 	// Setup face finder
     finder.setup("haarcascade_frontalface_default.xml");
+	//Setup Windows
+		int H = ofGetScreenHeight();
+		int W = ofGetScreenWidth();
+		
+		std::cout << "Height = " << H << "width = " << W <<std::endl;
+		windowResized(H,W);
     // Setup camera
-    cam.initGrabber(CAM_WIDTH, CAM_HEIGHT);
+	vector< ofVideoDevice > devicesList = cam.listDevices();
+	if (devicesList.size()!=0){
+		vector< ofVideoFormat > formatsList = devicesList[0].formats;
+		
+		//--------------------------------------------------------------
+		//TEST
+		//formatsList.push_back(ofVideoFormat());
+		//formatsList[0].height=1024;
+		//formatsList[0].width=920;		
+		//--------------------------------------------------------------
+		
+		if(formatsList.size()!=0){	
+			cam.initGrabber(formatsList[0].width,formatsList[0].height);
+		}
+		else{
+		cam.initGrabber(CAM_WIDTH,CAM_HEIGHT);
+		}
+	}
+	else{
+		cam.initGrabber(CAM_WIDTH,CAM_HEIGHT);
+	}
+
 	// Setup FinalPoint
 	finalPoint=ofVec3f(0.0f,0.0f,0.0f);
     
@@ -108,10 +136,6 @@ void ofApp::finalPointUpdate()
 			finalPoint.y=finder.blobs[0].centroid.y*scaleFactor;
 			finalPoint.z=getZFromOfRect(finder.blobs[0].boundingRect)*scaleFactor;
 		}
-	}
-	else
-	{
-		//finalPoint=ofVec3f(0.0f,0.0f,0.0f);
 	}
 }
 
