@@ -11,6 +11,8 @@ public:
     void update();
     void draw();
 	void exit();
+    
+    void sendDataToOSC();
 
 private:
     int pid;

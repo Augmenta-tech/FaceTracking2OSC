@@ -107,7 +107,37 @@ void ofApp::update(){
 	}
     
     // Send face position to osc
-    ofxOscMessage m;
+    sendDataToOSC();
+}
+
+//--------------------------------------------------------------
+void ofApp::draw(){
+	ofNoFill();
+    
+    cam.draw(0, 0, CAM_WIDTH, CAM_HEIGHT);
+    
+    if(finder.blobs.size() != 0){
+        ofRect(face.getTopLeft().x * CAM_WIDTH,
+               face.getTopLeft().y * CAM_HEIGHT,
+               face.getWidth() * CAM_WIDTH,
+               face.getHeight() * CAM_HEIGHT);
+    }
+
+    // Draw GUI
+    uiFramerate.setup("FPS", framerate);
+    gui.draw();
+}
+
+//--------------------------------------------------------------
+void ofApp::exit(){
+	gui.saveToFile("autosave.xml");
+}
+
+//--------------------------------------------------------------
+void ofApp::sendDataToOSC(){
+	ofxOscMessage m;
+    
+    // Send face-tracker data
     m.setAddress("/head");
     m.addFloatArg(face.getCenter().x);
     m.addFloatArg(face.getCenter().y);
@@ -117,6 +147,7 @@ void ofApp::update(){
     
     // Send Augmenta-simulated data
     m.clear();
+    
     switch(trackingState){
         case PERSON_ENTERED:
             m.setAddress("/au/personEntered");
@@ -133,43 +164,21 @@ void ofApp::update(){
         default:
             break;
     }
+    
     m.addIntArg(pid);       // pid
     m.addIntArg(0);         // oid
     m.addIntArg(age);       // age
     m.addFloatArg(face.getCenter().x);                              // centroid.x
-    m.addFloatArg(1.0 - face.getHeight());                          // centroid.y
+    m.addFloatArg(1-face.getHeight());                              // centroid.y
     m.addFloatArg(face.getCenter().x - oldFace.getCenter().x);      // velocity.x
-    m.addFloatArg(1.0 - (face.getHeight() - oldFace.getHeight()));  // velocity.y
-    m.addFloatArg(face.getCenter().y);                              // depth
+    m.addFloatArg((1-face.getHeight()) - (1-oldFace.getHeight()));  // velocity.y
+    m.addFloatArg(0.5f);                                            // depth
     m.addFloatArg(face.getTopLeft().x);                             // boundingRect.x
-    m.addFloatArg(1.0 - face.getHeight());                          // boundingRect.y
+    m.addFloatArg((1-face.getHeight())-face.getHeight()/2);         // boundingRect.y
     m.addFloatArg(face.getWidth());                                 // boundingRect.width
     m.addFloatArg(face.getHeight());                                // boundingRect.height
     m.addFloatArg(face.getCenter().x);                              // highest.x
-    m.addFloatArg(1.0 - face.getHeight());                          // highest.y
+    m.addFloatArg(1-face.getHeight());                              // highest.y
     m.addFloatArg(face.getCenter().y);                              // highest.z
     sender.sendMessage(m);
-}
-
-//--------------------------------------------------------------
-void ofApp::draw(){
-	ofNoFill();
-    
-    cam.draw(0, 0, CAM_WIDTH, CAM_HEIGHT);
-    
-    if(finder.blobs.size() != 0){
-        ofRect(face.getTopLeft().x * CAM_WIDTH,
-               face.getTopLeft().y * CAM_HEIGHT,
-               face.getWidth() * CAM_WIDTH,
-               face.getHeight() * CAM_HEIGHT);
-    }
-        
-    // Draw GUI
-    uiFramerate.setup("FPS", framerate);
-    gui.draw();
-}
-
-//--------------------------------------------------------------
-void ofApp::exit(){
-	gui.saveToFile("autosave.xml");
 }
