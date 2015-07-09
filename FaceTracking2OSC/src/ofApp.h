@@ -19,6 +19,7 @@ public:
 private:
     int pid;
     int age;
+    int lastUpdated;
 
 	int CAM_HEIGHT;
 	int CAM_WIDTH;
@@ -30,7 +31,7 @@ private:
     ofRectangle oldFace;
     
     int blobsNum;
-    enum trackingState{ PERSON_ENTERED, PERSON_UPDATED, PERSON_LEFT};
+    enum trackingState{ PERSON_ENTERED, PERSON_UPDATED, PERSON_LEFT, EMPTY};
     trackingState trackingState;
     
     ofxOscSender sender;
@@ -47,4 +48,5 @@ private:
     ofxFloatSlider threshold;
     ofxIntSlider finderMinWidth;
     ofxIntSlider finderMinHeight;
+    ofxIntSlider timeout;
 };

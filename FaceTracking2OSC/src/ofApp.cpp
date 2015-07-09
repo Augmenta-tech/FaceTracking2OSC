@@ -41,6 +41,7 @@ void ofApp::setup(){
     gui.add(threshold.setup("threshold", 0.2, 0, 0.1));
     gui.add(finderMinWidth.setup("finderMinWidth", 0, 0, 200));
     gui.add(finderMinHeight.setup("finderMinHeight", 0, 0, 200));
+    gui.add(timeout.setup("timeout", 0, 0, 60));
 
     // Load autosave (replace default parameters if file exists)
     if(ofFile::doesFileExist("autosave.xml")){
@@ -58,6 +59,7 @@ void ofApp::setup(){
     face.set(0, 0, 0, 0);
     oldFace.set(0, 0, 0, 0);
 	centroid = ofVec3f(CAM_WIDTH/2,CAM_HEIGHT/2,0);
+    trackingState = EMPTY;
 }
 
 //--------------------------------------------------------------
@@ -80,22 +82,38 @@ void ofApp::update(){
         // Augmenta-like behavior : get state to send in OSC
         // Person entered
         if(blobsNum == 0 && finder.blobs.size() != 0){
-            //std::cout << "Person entered" << std::endl;
             trackingState = PERSON_ENTERED;
             pid++;
             age = 0;
         }
         // Person updated
         else if(blobsNum != 0 && finder.blobs.size() != 0){
-            //std::cout << "Person updated" << std::endl;
             trackingState = PERSON_UPDATED;
             age++;
+            // Save the last frame person has been updated for timeout function
+            lastUpdated = ofGetFrameNum();
         }
         // Person left
         else if(blobsNum != 0 && finder.blobs.size() == 0){
-            //std::cout << "Person left" << std::endl;
-            trackingState = PERSON_LEFT;
+            // Timeout before person is considered to have really left
+            if(timeout == 0){
+                trackingState = PERSON_LEFT;
+            } else {
+                trackingState = PERSON_UPDATED;
+            }
         }
+        // Timeout
+        else if(blobsNum == 0 && finder.blobs.size() == 0){
+            // Timeout before person is considered to have really left
+            if(ofGetFrameNum()-lastUpdated < timeout){
+                trackingState = PERSON_UPDATED;
+            } else if(ofGetFrameNum()-lastUpdated == timeout){
+                trackingState = PERSON_LEFT;
+            } else {
+                trackingState = EMPTY;
+            }
+        }
+        
         // Update number of blobs
         blobsNum = finder.blobs.size();
         
@@ -146,7 +164,7 @@ void ofApp::draw(){
     cam.draw(0, 0, CAM_WIDTH, CAM_HEIGHT);
     
     // Draw area around face if detected
-    if(finder.blobs.size() != 0){
+    if(trackingState == PERSON_ENTERED || trackingState == PERSON_UPDATED){
         ofRect(face.getTopLeft().x * CAM_WIDTH,
                face.getTopLeft().y * CAM_HEIGHT,
                face.getWidth() * CAM_WIDTH,
@@ -197,23 +215,24 @@ void ofApp::sendDataToOSC(){
         default:
             break;
     }
-    
-    m.addIntArg(pid);       // pid
-    m.addIntArg(0);         // oid
-    m.addIntArg(age);       // age
-    m.addFloatArg(face.getCenter().x);                              // centroid.x
-    m.addFloatArg(1-face.getHeight());                              // centroid.y
-    m.addFloatArg(face.getCenter().x - oldFace.getCenter().x);      // velocity.x
-    m.addFloatArg((1-face.getHeight()) - (1-oldFace.getHeight()));  // velocity.y
-    m.addFloatArg(0.5f);                                            // depth
-    m.addFloatArg(face.getTopLeft().x);                             // boundingRect.x
-    m.addFloatArg((1-face.getHeight())-face.getHeight()/2);         // boundingRect.y
-    m.addFloatArg(face.getWidth());                                 // boundingRect.width
-    m.addFloatArg(face.getHeight());                                // boundingRect.height
-    m.addFloatArg(face.getCenter().x);                              // highest.x
-    m.addFloatArg(1-face.getHeight());                              // highest.y
-    m.addFloatArg(face.getCenter().y);                              // highest.z
-    sender.sendMessage(m);
+    if(trackingState != EMPTY){
+        m.addIntArg(pid);       // pid
+        m.addIntArg(0);         // oid
+        m.addIntArg(age);       // age
+        m.addFloatArg(face.getCenter().x);                              // centroid.x
+        m.addFloatArg(1-face.getHeight());                              // centroid.y
+        m.addFloatArg(face.getCenter().x - oldFace.getCenter().x);      // velocity.x
+        m.addFloatArg((1-face.getHeight()) - (1-oldFace.getHeight()));  // velocity.y
+        m.addFloatArg(0.5f);                                            // depth
+        m.addFloatArg(face.getTopLeft().x);                             // boundingRect.x
+        m.addFloatArg((1-face.getHeight())-face.getHeight()/2);         // boundingRect.y
+        m.addFloatArg(face.getWidth());                                 // boundingRect.width
+        m.addFloatArg(face.getHeight());                                // boundingRect.height
+        m.addFloatArg(face.getCenter().x);                              // highest.x
+        m.addFloatArg(1-face.getHeight());                              // highest.y
+        m.addFloatArg(face.getCenter().y);                              // highest.z
+        sender.sendMessage(m);
+    }
 }
 
 //--------------------------------------------------------------
