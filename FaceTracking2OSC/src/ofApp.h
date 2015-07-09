@@ -20,10 +20,20 @@ class ofApp : public ofBaseApp{
 
 	private:
 
+
+private:
+    int pid;
+    int age;
+
     ofxCvHaarFinder finder;
     ofVideoGrabber cam;
     ofVec3f finalPoint;
     ofRectangle face;
+    ofRectangle oldFace;
+    
+    int blobsNum;
+    enum trackingState{ PERSON_ENTERED, PERSON_UPDATED, PERSON_LEFT};
+    trackingState trackingState;
     
     ofxOscSender sender;
     string host;
