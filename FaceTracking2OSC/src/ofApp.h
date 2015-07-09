@@ -13,14 +13,19 @@ public:
 	void exit();
     
     void sendDataToOSC();
+	float getZFromOfRect(ofRectangle rect);
+	void drawCentroid();
 
 private:
     int pid;
     int age;
-    
+
+	int CAM_HEIGHT;
+	int CAM_WIDTH;
+
     ofxCvHaarFinder finder;
     ofVideoGrabber cam;
-    
+    ofVec3f centroid;
     ofRectangle face;
     ofRectangle oldFace;
     

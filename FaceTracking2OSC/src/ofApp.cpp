@@ -1,14 +1,35 @@
 #include "ofApp.h"
+#include "ofAppBaseWindow.h"
 
-#define CAM_WIDTH  640
-#define CAM_HEIGHT 480
+
 
 //--------------------------------------------------------------
 void ofApp::setup(){
 	// Setup face finder
     finder.setup("haarcascade_frontalface_default.xml");
+	
     // Setup camera
-    cam.initGrabber(CAM_WIDTH, CAM_HEIGHT);
+	CAM_WIDTH=  640;
+	CAM_HEIGHT= 480;
+    
+    // Get camera's resolution
+	vector< ofVideoDevice > devicesList = cam.listDevices();
+	if (devicesList.size()!=0){
+		vector< ofVideoFormat > formatsList = devicesList[0].formats;
+		if(formatsList.size()!=0){	
+			CAM_WIDTH=  formatsList[0].width;
+			CAM_HEIGHT= formatsList[0].height;
+			cam.initGrabber(formatsList[0].width,formatsList[0].height);
+		}
+		else{
+            cam.initGrabber(CAM_WIDTH,CAM_HEIGHT);
+		}
+	}
+	else{
+		cam.initGrabber(CAM_WIDTH,CAM_HEIGHT);
+	}
+    // Adapt window size to camera resolution
+    ofSetWindowShape(CAM_WIDTH, CAM_HEIGHT);
     
     // Setup GUI with default parameters
     gui.setup();
@@ -20,7 +41,7 @@ void ofApp::setup(){
     gui.add(threshold.setup("threshold", 0.2, 0, 0.1));
     gui.add(finderMinWidth.setup("finderMinWidth", 0, 0, 200));
     gui.add(finderMinHeight.setup("finderMinHeight", 0, 0, 200));
-    
+
     // Load autosave (replace default parameters if file exists)
     if(ofFile::doesFileExist("autosave.xml")){
         gui.loadFromFile("autosave.xml");
@@ -36,6 +57,7 @@ void ofApp::setup(){
     age = 0;
     face.set(0, 0, 0, 0);
     oldFace.set(0, 0, 0, 0);
+	centroid = ofVec3f(CAM_WIDTH/2,CAM_HEIGHT/2,0);
 }
 
 //--------------------------------------------------------------
@@ -52,8 +74,9 @@ void ofApp::update(){
         // Use resized image for better performance
         img.resize(CAM_WIDTH/scaleFactor, CAM_HEIGHT/scaleFactor);
         // Find face
-        finder.findHaarObjects(img, finderMinWidth/scaleFactor, finderMinHeight/scaleFactor);
+        finder.findHaarObjects(img, finderMinWidth/scaleFactor, finderMinHeight/scaleFactor);		
         
+		// Update face position
         // Augmenta-like behavior : get state to send in OSC
         // Person entered
         if(blobsNum == 0 && finder.blobs.size() != 0){
@@ -93,17 +116,23 @@ void ofApp::update(){
             float height = oldFace.getHeight();
             
             // Threshold ignore new position if it has not changed enough
-            if(abs(x-newFace.getTopLeft().x)    > threshold) x = newFace.getTopLeft().x;
-            if(abs(y-newFace.getTopLeft().y)    > threshold) y = newFace.getTopLeft().y;
-            if(abs(width-newFace.getWidth())    > threshold) width = newFace.getWidth();
+			if(abs(width-newFace.getWidth())    > threshold) width = newFace.getWidth();
             if(abs(height-newFace.getHeight())  > threshold) height = newFace.getHeight();
-            
+			if(abs(x-newFace.getTopLeft().x)    > threshold) x = newFace.getTopLeft().x;
+			if(abs(y-newFace.getTopLeft().y)    > threshold) y = newFace.getTopLeft().y;
+
             // Exponential smooth on new position
             face.set(smoothFactor * oldFace.getTopLeft().x + (1-smoothFactor) * x,
                      smoothFactor * oldFace.getTopLeft().y + (1-smoothFactor) * y,
                      smoothFactor * oldFace.getWidth() + (1-smoothFactor) * width,
                      smoothFactor * oldFace.getHeight() + (1-smoothFactor) * height);
+
+			//Setting new coordinates of centroid
+			centroid.y = face.getCenter().y * CAM_HEIGHT;
+			centroid.x = face.getCenter().x * CAM_WIDTH;
+			centroid.z = (face.getHeight() * CAM_HEIGHT + face.getWidth() * CAM_WIDTH)/2;
         }
+		
 	}
     
     // Send face position to osc
@@ -116,11 +145,15 @@ void ofApp::draw(){
     
     cam.draw(0, 0, CAM_WIDTH, CAM_HEIGHT);
     
+    // Draw area around face if detected
     if(finder.blobs.size() != 0){
         ofRect(face.getTopLeft().x * CAM_WIDTH,
                face.getTopLeft().y * CAM_HEIGHT,
                face.getWidth() * CAM_WIDTH,
                face.getHeight() * CAM_HEIGHT);
+        
+        // Draw FinalPoint
+        drawCentroid();
     }
 
     // Draw GUI
@@ -181,4 +214,13 @@ void ofApp::sendDataToOSC(){
     m.addFloatArg(1-face.getHeight());                              // highest.y
     m.addFloatArg(face.getCenter().y);                              // highest.z
     sender.sendMessage(m);
+}
+
+//--------------------------------------------------------------
+void ofApp::drawCentroid(){
+	ofPushStyle();
+    ofSetColor(255,0,0);
+	ofFill();
+    ofCircle(centroid.x,centroid.y,10);
+	ofPopStyle();
 }
