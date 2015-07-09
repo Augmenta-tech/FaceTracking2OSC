@@ -27,10 +27,10 @@ void ofApp::setup(){
 	else{
 		cam.initGrabber(CAM_WIDTH,CAM_HEIGHT);
 	}
-
-	// Setup FinalPoint
-	finalPoint=ofVec3f(0.0f,0.0f,0.0f);
     
+	// Setup FinalPoint
+	finalPoint = ofVec3f(CAM_WIDTH/2,CAM_HEIGHT/2,0);
+
     // Setup GUI with default parameters
     gui.setup();
     gui.add(uiFramerate.setup("FPS", framerate));
@@ -197,7 +197,7 @@ void ofApp::draw(){
     ofRect(face.getTopLeft().x, face.getTopLeft().y, face.getWidth(), face.getHeight());
     
 	// Draw FinalPoint 
-	finalPointDraw();
+		finalPointDraw();
 
     if(finder.blobs.size() != 0){
         ofRect(face.getTopLeft().x * CAM_WIDTH,
