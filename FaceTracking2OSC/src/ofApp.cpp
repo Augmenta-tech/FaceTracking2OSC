@@ -9,12 +9,7 @@
 void ofApp::setup(){
 	// Setup face finder
     finder.setup("haarcascade_frontalface_default.xml");
-	//Setup Windows
-		int H = ofGetScreenHeight();
-		int W = ofGetScreenWidth();
-		
-		std::cout << "Height = " << H << "width = " << W <<std::endl;
-		windowResized(H,W);
+	
     // Setup camera
 	vector< ofVideoDevice > devicesList = cam.listDevices();
 	if (devicesList.size()!=0){
@@ -78,12 +73,7 @@ void ofApp::update(){
         // Use resized image for better performance
         img.resize(CAM_WIDTH/scaleFactor, CAM_HEIGHT/scaleFactor);
         // Find face
-        finder.findHaarObjects(img, finderMinWidth/scaleFactor, finderMinHeight/scaleFactor);
- 
-		finalPointX = ofToString(finalPoint.x);
-		finalPointY = ofToString(finalPoint.y);
-		finalPointZ = ofToString(finalPoint.z);
-		
+        finder.findHaarObjects(img, finderMinWidth/scaleFactor, finderMinHeight/scaleFactor);		
         
 		// Update face position
         // Augmenta-like behavior : get state to send in OSC
@@ -135,7 +125,11 @@ void ofApp::update(){
 				y = newFace.getTopLeft().y;
 				finalPoint.y = (y + newFace.getHeight()/2)*CAM_HEIGHT;
 			}
-			finalPoint.z = newFace.getHeight() * CAM_HEIGHT + newFace.getWidth()/2 * CAM_WIDTH;
+			finalPoint.z = newFace.getHeight() * CAM_HEIGHT + newFace.getWidth() * CAM_WIDTH;
+
+			finalPointX = ofToString(finalPoint.x);
+			finalPointY = ofToString(finalPoint.y);
+			finalPointZ = ofToString(finalPoint.z);
 
             // Exponential smooth on new position
             face.set(smoothFactor * oldFace.getTopLeft().x + (1-smoothFactor) * x,
@@ -201,7 +195,6 @@ void ofApp::draw(){
     
 	// Draw FinalPoint 
 	finalPointDraw();
-
 
     if(finder.blobs.size() != 0){
         ofRect(face.getTopLeft().x * CAM_WIDTH,

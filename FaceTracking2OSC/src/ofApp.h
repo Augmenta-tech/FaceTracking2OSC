@@ -7,7 +7,7 @@
 
 class ofApp : public ofBaseApp{
 
-	public:
+public:
     
 	void setup();
     void update();
@@ -17,12 +17,9 @@ class ofApp : public ofBaseApp{
 	void finalPointDraw();
 	void finalPointUpdate();
 
-
-	private:
-
-
 private:
-    int pid;
+    
+	int pid;
     int age;
 
     ofxCvHaarFinder finder;
