@@ -37,8 +37,10 @@ void ofApp::setup(){
     gui.add(uiHost.setup("oscHost", "127.0.0.1"));
     gui.add(uiPort.setup("oscPort", ofToString(12000)));
     gui.add(scaleFactor.setup("scaleFactor", 4, 1, 8));
-    gui.add(smoothFactor.setup("smoothFactor", 0.2, 0, 1));
-    gui.add(threshold.setup("threshold", 0.2, 0, 0.1));
+    gui.add(smoothPos.setup("smoothPos", 0.2, 0, 1));
+    gui.add(thresholdPos.setup("thresholdPos", 0.2, 0, 0.1));
+    gui.add(smoothBound.setup("smoothBound", 0.2, 0, 1));
+    gui.add(thresholdBound.setup("thresholdBound", 0.2, 0, 0.1));
     gui.add(finderMinWidth.setup("finderMinWidth", 0, 0, 200));
     gui.add(finderMinHeight.setup("finderMinHeight", 0, 0, 200));
     gui.add(timeout.setup("timeout", 0, 0, 60));
@@ -134,16 +136,16 @@ void ofApp::update(){
             float height = oldFace.getHeight();
             
             // Threshold ignore new position if it has not changed enough
-			if(abs(width-newFace.getWidth())    > threshold) width = newFace.getWidth();
-            if(abs(height-newFace.getHeight())  > threshold) height = newFace.getHeight();
-			if(abs(x-newFace.getTopLeft().x)    > threshold) x = newFace.getTopLeft().x;
-			if(abs(y-newFace.getTopLeft().y)    > threshold) y = newFace.getTopLeft().y;
+			if(abs(width-newFace.getWidth())    > thresholdBound) width = newFace.getWidth();
+            if(abs(height-newFace.getHeight())  > thresholdBound) height = newFace.getHeight();
+			if(abs(x-newFace.getTopLeft().x)    > thresholdPos) x = newFace.getTopLeft().x;
+			if(abs(y-newFace.getTopLeft().y)    > thresholdPos) y = newFace.getTopLeft().y;
 
             // Exponential smooth on new position
-            face.set(smoothFactor * oldFace.getTopLeft().x + (1-smoothFactor) * x,
-                     smoothFactor * oldFace.getTopLeft().y + (1-smoothFactor) * y,
-                     smoothFactor * oldFace.getWidth() + (1-smoothFactor) * width,
-                     smoothFactor * oldFace.getHeight() + (1-smoothFactor) * height);
+            face.set(smoothPos * oldFace.getTopLeft().x + (1-smoothPos) * x,
+                     smoothPos * oldFace.getTopLeft().y + (1-smoothPos) * y,
+                     smoothBound * oldFace.getWidth() + (1-smoothBound) * width,
+                     smoothBound * oldFace.getHeight() + (1-smoothBound) * height);
 
 			//Setting new coordinates of centroid
 			centroid.y = face.getCenter().y * CAM_HEIGHT;

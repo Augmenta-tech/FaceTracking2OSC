@@ -44,8 +44,10 @@ private:
     ofxLabel uiHost;
     ofxLabel uiPort;
     ofxIntSlider scaleFactor;
-    ofxFloatSlider smoothFactor;
-    ofxFloatSlider threshold;
+    ofxFloatSlider smoothPos;
+    ofxFloatSlider thresholdPos;
+    ofxFloatSlider smoothBound;
+    ofxFloatSlider thresholdBound;
     ofxIntSlider finderMinWidth;
     ofxIntSlider finderMinHeight;
     ofxIntSlider timeout;
