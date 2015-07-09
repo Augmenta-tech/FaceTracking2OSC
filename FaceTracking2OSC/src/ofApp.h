@@ -22,6 +22,9 @@ private:
 	int pid;
     int age;
 
+	int CAM_HEIGHT;
+	int CAM_WIDTH;
+
     ofxCvHaarFinder finder;
     ofVideoGrabber cam;
     ofVec3f finalPoint;

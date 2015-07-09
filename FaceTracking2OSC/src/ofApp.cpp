@@ -1,8 +1,6 @@
 #include "ofApp.h"
 #include "ofAppBaseWindow.h"
 
-#define CAM_WIDTH  640
-#define CAM_HEIGHT 480
 
 
 //--------------------------------------------------------------
@@ -11,10 +9,15 @@ void ofApp::setup(){
     finder.setup("haarcascade_frontalface_default.xml");
 	
     // Setup camera
+	CAM_WIDTH=  640;
+	CAM_HEIGHT= 480;
+
 	vector< ofVideoDevice > devicesList = cam.listDevices();
 	if (devicesList.size()!=0){
 		vector< ofVideoFormat > formatsList = devicesList[0].formats;
 		if(formatsList.size()!=0){	
+			CAM_WIDTH=  formatsList[0].width;
+			CAM_HEIGHT= formatsList[0].height;
 			cam.initGrabber(formatsList[0].width,formatsList[0].height);
 		}
 		else{

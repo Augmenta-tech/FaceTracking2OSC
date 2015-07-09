@@ -6,10 +6,8 @@ int main( ){
 
 	ofSetupOpenGL(640,480, OF_WINDOW);	
 	ofSetWindowTitle("Face Tracker");
-	
-	// this kicks off the running of my app
-	// can be OF_WINDOW or OF_FULLSCREEN
-	// pass in width and height too:
-	
+	ofSetWindowShape(ofGetScreenWidth(),ofGetScreenHeight());
+	std::cout << "screen size : " <<ofGetWindowHeight() << " " << ofGetWindowWidth() << std::endl; 
+	ofSetWindowPosition(0,0);
 	ofRunApp( new ofApp());
 }
