@@ -120,25 +120,25 @@ void ofApp::update(){
             // Threshold ignore new position if it has not changed enough
 			if(abs(width-newFace.getWidth())    > threshold) width = newFace.getWidth();
             if(abs(height-newFace.getHeight())  > threshold) height = newFace.getHeight();
-			  if(abs(x-newFace.getTopLeft().x)    > threshold){
-				x = newFace.getTopLeft().x;
-				finalPoint.x = (x + newFace.getWidth()/2)* CAM_WIDTH;
-			}
-			if(abs(y-newFace.getTopLeft().y)    > threshold){
-				y = newFace.getTopLeft().y;
-				finalPoint.y = (y + newFace.getHeight()/2)*CAM_HEIGHT;
-			}
-			finalPoint.z = newFace.getHeight() * CAM_HEIGHT + newFace.getWidth() * CAM_WIDTH;
-
-			finalPointX = ofToString(finalPoint.x);
-			finalPointY = ofToString(finalPoint.y);
-			finalPointZ = ofToString(finalPoint.z);
+			if(abs(x-newFace.getTopLeft().x)    > threshold) x = newFace.getTopLeft().x;
+			if(abs(y-newFace.getTopLeft().y)    > threshold) y = newFace.getTopLeft().y;
 
             // Exponential smooth on new position
             face.set(smoothFactor * oldFace.getTopLeft().x + (1-smoothFactor) * x,
                      smoothFactor * oldFace.getTopLeft().y + (1-smoothFactor) * y,
                      smoothFactor * oldFace.getWidth() + (1-smoothFactor) * width,
                      smoothFactor * oldFace.getHeight() + (1-smoothFactor) * height);
+
+			//Setting new coordinates of FinalPoint 
+			finalPoint.y = face.getCenter().y * CAM_HEIGHT;
+			finalPoint.x = face.getCenter().x * CAM_WIDTH;
+			finalPoint.z = (face.getHeight() * CAM_HEIGHT + face.getWidth() * CAM_WIDTH)/2;
+
+			//GUI of FinalPoint
+			finalPointX = ofToString(finalPoint.x);
+			finalPointY = ofToString(finalPoint.y);
+			finalPointZ = ofToString(finalPoint.z);
+
         }
 		
 	}
