@@ -43,7 +43,6 @@ void ofApp::setup(){
     gui.add(threshold.setup("threshold", 0.2, 0, 0.1));
     gui.add(finderMinWidth.setup("finderMinWidth", 0, 0, 200));
     gui.add(finderMinHeight.setup("finderMinHeight", 0, 0, 200));
-	gui.add(finderAntiShacking.setup("antiShacking",0,0,20));
 	gui.add(uiFinalPointX.setup("X = ", finalPointX));
 	gui.add(uiFinalPointY.setup("Y = ", finalPointY));
 	gui.add(uiFinalPointZ.setup("Z = ", finalPointZ));
@@ -80,8 +79,7 @@ void ofApp::update(){
         img.resize(CAM_WIDTH/scaleFactor, CAM_HEIGHT/scaleFactor);
         // Find face
         finder.findHaarObjects(img, finderMinWidth/scaleFactor, finderMinHeight/scaleFactor);
-        
-		finalPointUpdate();
+ 
 		finalPointX = ofToString(finalPoint.x);
 		finalPointY = ofToString(finalPoint.y);
 		finalPointZ = ofToString(finalPoint.z);
@@ -127,11 +125,18 @@ void ofApp::update(){
             float height = oldFace.getHeight();
             
             // Threshold ignore new position if it has not changed enough
-            if(abs(x-newFace.getTopLeft().x)    > threshold) x = newFace.getTopLeft().x;
-            if(abs(y-newFace.getTopLeft().y)    > threshold) y = newFace.getTopLeft().y;
-            if(abs(width-newFace.getWidth())    > threshold) width = newFace.getWidth();
+			if(abs(width-newFace.getWidth())    > threshold) width = newFace.getWidth();
             if(abs(height-newFace.getHeight())  > threshold) height = newFace.getHeight();
-            
+			  if(abs(x-newFace.getTopLeft().x)    > threshold){
+				x = newFace.getTopLeft().x;
+				finalPoint.x = (x + newFace.getWidth()/2)* CAM_WIDTH;
+			}
+			if(abs(y-newFace.getTopLeft().y)    > threshold){
+				y = newFace.getTopLeft().y;
+				finalPoint.y = (y + newFace.getHeight()/2)*CAM_HEIGHT;
+			}
+			finalPoint.z = newFace.getHeight() * CAM_HEIGHT + newFace.getWidth()/2 * CAM_WIDTH;
+
             // Exponential smooth on new position
             face.set(smoothFactor * oldFace.getTopLeft().x + (1-smoothFactor) * x,
                      smoothFactor * oldFace.getTopLeft().y + (1-smoothFactor) * y,
@@ -186,22 +191,6 @@ void ofApp::update(){
     sender.sendMessage(m);
 }
 
-
-void ofApp::finalPointUpdate()
-{
-    if(finder.blobs.size()>=1)
-    {
-		ofVec3f tempPoint(finder.blobs[0].centroid.x*scaleFactor, finder.blobs[0].centroid.y*scaleFactor,
-							getZFromOfRect(finder.blobs[0].boundingRect)*scaleFactor);
-		if(tempPoint.distance(finalPoint)>finderAntiShacking)
-		{	
-			finalPoint.x=finder.blobs[0].centroid.x*scaleFactor;
-			finalPoint.y=finder.blobs[0].centroid.y*scaleFactor;
-			finalPoint.z=getZFromOfRect(finder.blobs[0].boundingRect)*scaleFactor;
-		}
-	}
-}
-
 //--------------------------------------------------------------
 void ofApp::draw(){
 	ofNoFill();
@@ -244,7 +233,3 @@ void ofApp::exit(){
 	gui.saveToFile("autosave.xml");
 }
 
-float ofApp::getZFromOfRect(ofRectangle rect)
-{
-	return (rect.getWidth()+rect.getHeight())/2.0f;
-}

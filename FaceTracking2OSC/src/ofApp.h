@@ -55,6 +55,6 @@ private:
     ofxFloatSlider threshold;
     ofxIntSlider finderMinWidth;
     ofxIntSlider finderMinHeight;
-	ofxIntSlider finderAntiShacking;
+	
 	
 };
