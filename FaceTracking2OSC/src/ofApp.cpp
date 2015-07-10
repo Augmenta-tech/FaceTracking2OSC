@@ -47,10 +47,10 @@ void ofApp::setup(){
     gui.add(timeout.setup("timeout", 0, 0, 60));
 	gui.add(brightness.setup("brightness",50,0,150));
 	gui.add(contrast.setup("contrast",50,0,100));
-	gui.add(smoothAverage.setup("smoothAverage",30,1,30));
+	gui.add(smoothAverage.setup("smoothAverage",10,1,30));
 
 	//Setup facesVector
-	faces.assign(smoothAverage,ofRectangle(CAM_WIDTH/2,CAM_HEIGHT/2,0,0));
+	faces.assign(30,ofRectangle(1/2,1/2,0,0));
 
     // Load autosave (replace default parameters if file exists)
     if(ofFile::doesFileExist("autosave.xml")){
