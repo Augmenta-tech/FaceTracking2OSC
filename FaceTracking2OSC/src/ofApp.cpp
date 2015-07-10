@@ -38,16 +38,16 @@ void ofApp::setup(){
     gui.add(uiHost.setup("oscHost", "127.0.0.1"));
     gui.add(uiPort.setup("oscPort", ofToString(12000)));
     gui.add(scaleFactor.setup("scaleFactor", 4, 1, 8));
-    gui.add(smoothPos.setup("smoothPos", 0.2, 0, 1));
+    gui.add(smoothPos.setup("smoothPos Exp", 0.2, 0, 1));
     gui.add(thresholdPos.setup("thresholdPos", 0.2, 0, 0.1));
-    gui.add(smoothBound.setup("smoothBound", 0.2, 0, 1));
+    gui.add(smoothBound.setup("smoothBound Exp", 0.2, 0, 1));
     gui.add(thresholdBound.setup("thresholdBound", 0.2, 0, 0.1));
     gui.add(finderMinWidth.setup("finderMinWidth", 0, 0, 200));
     gui.add(finderMinHeight.setup("finderMinHeight", 0, 0, 200));
     gui.add(timeout.setup("timeout", 0, 0, 60));
 	gui.add(brightness.setup("brightness",50,0,150));
 	gui.add(contrast.setup("contrast",50,0,100));
-	gui.add(smoothAverage.setup("smooth average",10,0,10));
+	gui.add(smoothAverage.setup("smoothAverage",30,1,30));
 
 	//Setup facesVector
 	faces.assign(smoothAverage,ofRectangle(CAM_WIDTH/2,CAM_HEIGHT/2,0,0));
@@ -162,18 +162,11 @@ void ofApp::update(){
                      smoothPos * oldFace.getTopLeft().y + (1-smoothPos) * y,
                      smoothBound * oldFace.getWidth() + (1-smoothBound) * width,
                      smoothBound * oldFace.getHeight() + (1-smoothBound) * height);
-			
-			//Updating facesVector
+
+			// Updating facesVector
 			faces.insert( faces.begin(),face);
 			faces.pop_back();
 			centroid =	SmoothFaceFromAVerage();
-
-			//Setting new coordinates of centroid
-		/*	
-			centroid.y = face.getCenter().y * CAM_HEIGHT;
-			centroid.x = face.getCenter().x * CAM_WIDTH;
-			centroid.z = (face.getHeight() * CAM_HEIGHT + face.getWidth() * CAM_WIDTH)/2;
-		*/
         }
 		
 	}
@@ -195,9 +188,8 @@ void ofApp::draw(){
                face.getWidth() * CAM_WIDTH,
                face.getHeight() * CAM_HEIGHT);
         
-		//TEST----------------------------
-		printFaces();
-		//--------------------------------
+		// Draw olds centroids
+		drawOldsCentroids();
 
         // Draw FinalPoint
         drawCentroid();
@@ -273,7 +265,7 @@ void ofApp::drawCentroid(){
 	ofPopStyle();
 }
 
-void ofApp::printFaces(){
+void ofApp::drawOldsCentroids(){
 	for(int i = smoothAverage-1; i > 0; --i){
 		ofPushStyle();
 		ofSetColor(25*i,25*i,255);

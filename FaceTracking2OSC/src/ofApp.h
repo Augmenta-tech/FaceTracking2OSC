@@ -13,9 +13,8 @@ public:
 	void exit();
     
     void sendDataToOSC();
-	float getZFromOfRect(ofRectangle rect);
 	void drawCentroid();
-	void printFaces();
+	void drawOldsCentroids();
 	ofVec3f SmoothFaceFromAVerage();
 
 
