@@ -15,6 +15,10 @@ public:
     void sendDataToOSC();
 	float getZFromOfRect(ofRectangle rect);
 	void drawCentroid();
+	void printFaces();
+	ofVec3f SmoothFaceFromAVerage();
+
+
 
 private:
     int pid;
@@ -54,5 +58,8 @@ private:
     ofxIntSlider timeout;
 	ofxIntSlider contrast;
 	ofxIntSlider brightness;
-	ofxIntSlider thresholdColor;
+	ofxIntSlider smoothAverage;
+
+	vector<ofRectangle> faces;
+
 };

@@ -1,7 +1,7 @@
 #include "ofApp.h"
 #include "ofAppBaseWindow.h"
 
-
+//#define smoothAverage 10
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -29,7 +29,7 @@ void ofApp::setup(){
 		cam.initGrabber(CAM_WIDTH,CAM_HEIGHT);
 	}
     // Adapt window size to camera resolution
-    ofSetWindowShape(CAM_WIDTH*2, CAM_HEIGHT);
+    ofSetWindowShape(CAM_WIDTH, CAM_HEIGHT);
 	imgTransform.allocate(CAM_WIDTH,CAM_HEIGHT);
     
     // Setup GUI with default parameters
@@ -47,8 +47,10 @@ void ofApp::setup(){
     gui.add(timeout.setup("timeout", 0, 0, 60));
 	gui.add(brightness.setup("brightness",50,0,150));
 	gui.add(contrast.setup("contrast",50,0,100));
-	gui.add(thresholdColor.setup("thresholdColor",20,0,50));
+	gui.add(smoothAverage.setup("smooth average",10,0,10));
 
+	//Setup facesVector
+	faces.assign(smoothAverage,ofRectangle(CAM_WIDTH/2,CAM_HEIGHT/2,0,0));
 
     // Load autosave (replace default parameters if file exists)
     if(ofFile::doesFileExist("autosave.xml")){
@@ -88,10 +90,6 @@ void ofApp::update(){
 		img.setImageType(OF_IMAGE_GRAYSCALE);
 		imgTransform.setFromPixels(img.getPixelsRef());
 		imgTransform.contrastStretch();
-
-		if(thresholdColor != 0){
-			imgTransform.adaptiveThreshold(thresholdColor);
-		}
 		imgTransform.brightnessContrast(static_cast<float>(brightness)/100,static_cast<float>(contrast)/100);
 
         // Find face
@@ -158,16 +156,24 @@ void ofApp::update(){
 			if(abs(x-newFace.getTopLeft().x)    > thresholdPos) x = newFace.getTopLeft().x;
 			if(abs(y-newFace.getTopLeft().y)    > thresholdPos) y = newFace.getTopLeft().y;
 
+
             // Exponential smooth on new position
             face.set(smoothPos * oldFace.getTopLeft().x + (1-smoothPos) * x,
                      smoothPos * oldFace.getTopLeft().y + (1-smoothPos) * y,
                      smoothBound * oldFace.getWidth() + (1-smoothBound) * width,
                      smoothBound * oldFace.getHeight() + (1-smoothBound) * height);
+			
+			//Updating facesVector
+			faces.insert( faces.begin(),face);
+			faces.pop_back();
+			centroid =	SmoothFaceFromAVerage();
 
 			//Setting new coordinates of centroid
+		/*	
 			centroid.y = face.getCenter().y * CAM_HEIGHT;
 			centroid.x = face.getCenter().x * CAM_WIDTH;
 			centroid.z = (face.getHeight() * CAM_HEIGHT + face.getWidth() * CAM_WIDTH)/2;
+		*/
         }
 		
 	}
@@ -180,9 +186,8 @@ void ofApp::update(){
 void ofApp::draw(){
 	ofNoFill();
     
-    cam.draw(0, 0, CAM_WIDTH, CAM_HEIGHT);
-	imgTransform.draw(CAM_WIDTH,0,CAM_WIDTH,CAM_HEIGHT);
-    
+	imgTransform.draw(0, 0, CAM_WIDTH, CAM_HEIGHT);
+    	
     // Draw area around face if detected
     if(trackingState == PERSON_ENTERED || trackingState == PERSON_UPDATED){
         ofRect(face.getTopLeft().x * CAM_WIDTH,
@@ -190,6 +195,10 @@ void ofApp::draw(){
                face.getWidth() * CAM_WIDTH,
                face.getHeight() * CAM_HEIGHT);
         
+		//TEST----------------------------
+		printFaces();
+		//--------------------------------
+
         // Draw FinalPoint
         drawCentroid();
     }
@@ -261,6 +270,33 @@ void ofApp::drawCentroid(){
     ofSetColor(255,0,0);
 	ofFill();
     ofCircle(centroid.x, centroid.y, 10);
-	ofCircle(centroid.x + CAM_WIDTH, centroid.y, 10);
 	ofPopStyle();
+}
+
+void ofApp::printFaces(){
+	for(int i = smoothAverage-1; i > 0; --i){
+		ofPushStyle();
+		ofSetColor(25*i,25*i,255);
+		ofFill();
+		ofCircle(faces[i].getCenter().x * CAM_WIDTH, faces[i].getCenter().y * CAM_HEIGHT, 10);
+		ofPopStyle();
+	}
+}
+
+ofVec3f ofApp::SmoothFaceFromAVerage(){
+
+	ofVec3f temporaryFace= ofVec3f(0,0,0);
+	float divide = 0;
+	for(int i = 0 ; i < smoothAverage ; i++){
+		temporaryFace.x = temporaryFace.x + faces[i].getCenter().x * (static_cast<float>(smoothAverage - i) / smoothAverage) * CAM_WIDTH;
+		temporaryFace.y = temporaryFace.y + faces[i].getCenter().y * (static_cast<float>(smoothAverage - i) / smoothAverage) * CAM_HEIGHT;
+		temporaryFace.z = temporaryFace.z + ((face.getHeight() * CAM_HEIGHT + face.getWidth() * CAM_WIDTH)/2) *
+											((static_cast<float>(smoothAverage - i) / smoothAverage));
+		divide = divide + (static_cast<float>(smoothAverage - i) / smoothAverage);
+	}
+	temporaryFace.x = temporaryFace.x / divide ;
+	temporaryFace.y = temporaryFace.y / divide ;
+	temporaryFace.z = temporaryFace.z / divide ;
+
+	return temporaryFace;
 }
