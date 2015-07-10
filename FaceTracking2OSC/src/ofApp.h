@@ -24,6 +24,7 @@ private:
 	int CAM_HEIGHT;
 	int CAM_WIDTH;
 
+	ofxCvGrayscaleImage imgTransform;
     ofxCvHaarFinder finder;
     ofVideoGrabber cam;
     ofVec3f centroid;
@@ -51,4 +52,7 @@ private:
     ofxIntSlider finderMinWidth;
     ofxIntSlider finderMinHeight;
     ofxIntSlider timeout;
+	ofxIntSlider contrast;
+	ofxIntSlider brightness;
+	ofxIntSlider thresholdColor;
 };

@@ -29,7 +29,8 @@ void ofApp::setup(){
 		cam.initGrabber(CAM_WIDTH,CAM_HEIGHT);
 	}
     // Adapt window size to camera resolution
-    ofSetWindowShape(CAM_WIDTH, CAM_HEIGHT);
+    ofSetWindowShape(CAM_WIDTH*2, CAM_HEIGHT);
+	imgTransform.allocate(CAM_WIDTH,CAM_HEIGHT);
     
     // Setup GUI with default parameters
     gui.setup();
@@ -44,6 +45,10 @@ void ofApp::setup(){
     gui.add(finderMinWidth.setup("finderMinWidth", 0, 0, 200));
     gui.add(finderMinHeight.setup("finderMinHeight", 0, 0, 200));
     gui.add(timeout.setup("timeout", 0, 0, 60));
+	gui.add(brightness.setup("brightness",50,0,100));
+	gui.add(contrast.setup("contrast",50,0,100));
+	gui.add(thresholdColor.setup("thresholdColor",20,0,50));
+
 
     // Load autosave (replace default parameters if file exists)
     if(ofFile::doesFileExist("autosave.xml")){
@@ -73,13 +78,26 @@ void ofApp::update(){
     cam.update();
 	if(cam.isFrameNew()) {
         // Get camera image
-        ofImage img;
-        img.setFromPixels(cam.getPixelsRef());
-        // Use resized image for better performance
-        img.resize(CAM_WIDTH/scaleFactor, CAM_HEIGHT/scaleFactor);
-        // Find face
-        finder.findHaarObjects(img, finderMinWidth/scaleFactor, finderMinHeight/scaleFactor);		
+        ofImage img;	
         
+		img.setFromPixels(cam.getPixelsRef());
+		
+		// Use resized image for better performance
+        img.resize(CAM_WIDTH/scaleFactor, CAM_HEIGHT/scaleFactor);
+		
+		img.setImageType(OF_IMAGE_GRAYSCALE);
+		imgTransform.setFromPixels(img.getPixelsRef());
+		imgTransform.contrastStretch();
+
+		if(thresholdColor != 0){
+			imgTransform.adaptiveThreshold(thresholdColor);
+		}
+		imgTransform.brightnessContrast(static_cast<float>(brightness)/100,static_cast<float>(contrast)/100);
+
+        // Find face
+        finder.findHaarObjects(imgTransform, finderMinWidth/scaleFactor, finderMinHeight/scaleFactor);
+
+
 		// Update face position
         // Augmenta-like behavior : get state to send in OSC
         // Person entered
@@ -164,6 +182,7 @@ void ofApp::draw(){
 	ofNoFill();
     
     cam.draw(0, 0, CAM_WIDTH, CAM_HEIGHT);
+	imgTransform.draw(CAM_WIDTH,0,CAM_WIDTH,CAM_HEIGHT);
     
     // Draw area around face if detected
     if(trackingState == PERSON_ENTERED || trackingState == PERSON_UPDATED){
