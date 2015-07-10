@@ -45,7 +45,7 @@ void ofApp::setup(){
     gui.add(finderMinWidth.setup("finderMinWidth", 0, 0, 200));
     gui.add(finderMinHeight.setup("finderMinHeight", 0, 0, 200));
     gui.add(timeout.setup("timeout", 0, 0, 60));
-	gui.add(brightness.setup("brightness",50,0,100));
+	gui.add(brightness.setup("brightness",50,0,150));
 	gui.add(contrast.setup("contrast",50,0,100));
 	gui.add(thresholdColor.setup("thresholdColor",20,0,50));
 
@@ -96,7 +96,6 @@ void ofApp::update(){
 
         // Find face
         finder.findHaarObjects(imgTransform, finderMinWidth/scaleFactor, finderMinHeight/scaleFactor);
-
 
 		// Update face position
         // Augmenta-like behavior : get state to send in OSC
@@ -261,6 +260,7 @@ void ofApp::drawCentroid(){
 	ofPushStyle();
     ofSetColor(255,0,0);
 	ofFill();
-    ofCircle(centroid.x,centroid.y,10);
+    ofCircle(centroid.x, centroid.y, 10);
+	ofCircle(centroid.x + CAM_WIDTH, centroid.y, 10);
 	ofPopStyle();
 }
