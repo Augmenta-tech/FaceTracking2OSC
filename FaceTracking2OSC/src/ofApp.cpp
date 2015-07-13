@@ -246,21 +246,25 @@ void ofApp::sendDataToOSC(){
     // For Augmenta compatibility : XYZ in Augmenta = XZY in FaceTracking2OSC
     // The depth Z in FaceTracking2OSC is approximated with the height of the bounding rect around detected face,
     // relative to window height. The deeper you are, the smaller the bounding rect will be.
+    
+    float faceCenterZ = 1-face.getHeight();
+    float oldFaceCenterZ = 1-oldFace.getHeight();
+    
     if(trackingState != EMPTY){
         m.addIntArg(pid);       // pid
         m.addIntArg(0);         // oid
         m.addIntArg(age);       // age
         m.addFloatArg(face.getCenter().x);                              // centroid.x
-        m.addFloatArg(1-face.getHeight());                              // centroid.y
+        m.addFloatArg(faceCenterZ);                                     // centroid.y
         m.addFloatArg(face.getCenter().x - oldFace.getCenter().x);      // velocity.x
-        m.addFloatArg((1-face.getHeight()) - (1-oldFace.getHeight()));  // velocity.y
+        m.addFloatArg(faceCenterZ - oldFaceCenterZ);                    // velocity.y
         m.addFloatArg(0.5f);                                            // depth
         m.addFloatArg(face.getTopLeft().x);                             // boundingRect.x
-        m.addFloatArg((1-face.getHeight())-face.getHeight()/2);         // boundingRect.y
+        m.addFloatArg(faceCenterZ-face.getHeight()/2);                  // boundingRect.y
         m.addFloatArg(face.getWidth());                                 // boundingRect.width
         m.addFloatArg(face.getHeight());                                // boundingRect.height
         m.addFloatArg(face.getCenter().x);                              // highest.x
-        m.addFloatArg(1-face.getHeight());                              // highest.y
+        m.addFloatArg(faceCenterZ);                                     // highest.y
         m.addFloatArg(face.getCenter().y);                              // highest.z
         sender.sendMessage(m);
     }
@@ -287,7 +291,7 @@ void ofApp::drawOldsCentroids(){
 }
 
 //--------------------------------------------------------------
-//Returning the position of the centroid depending of the olds positions using a weighted average
+//Update the position of the face depending of the olds positions using a weighted average
 //the more the position is old the more is coefficient is weak, using indice as coefficient
 //--------------------------------------------------------------
 void ofApp::SmoothFaceFromAVerage(){
@@ -295,15 +299,15 @@ void ofApp::SmoothFaceFromAVerage(){
 	float divide = 0, w = 0, h = 0, coef = 0;
 	for(int i = 0; i < smoothAverage ; i++){
 		coef = ((static_cast<float>(smoothAverage - i) / smoothAverage));
-		temporaryFace.x = temporaryFace.x + faces[i].getCenter().x * coef * CAM_WIDTH;
-		temporaryFace.y = temporaryFace.y + faces[i].getCenter().y * coef * CAM_HEIGHT;											
-		w = w + faces[i].getWidth() * coef * CAM_WIDTH;
-		h = h + faces[i].getHeight() * coef * CAM_HEIGHT;
-		divide = divide + coef ;
+		temporaryFace.x += faces[i].getCenter().x * coef;
+		temporaryFace.y += faces[i].getCenter().y * coef;
+		w += faces[i].getWidth() * coef;
+		h += faces[i].getHeight() * coef;
+		divide += coef ;
 	}
-	temporaryFace.x = temporaryFace.x / (divide * CAM_WIDTH);
-	temporaryFace.y = temporaryFace.y / (divide * CAM_HEIGHT) ;
-	h = h / (divide * CAM_HEIGHT);
-	w = w / (divide * CAM_WIDTH);
+	temporaryFace.x /= divide;
+	temporaryFace.y /= divide ;
+	h /= divide;
+	w /= divide;
 	face.setFromCenter(temporaryFace.x, temporaryFace.y, w, h);	
 }
