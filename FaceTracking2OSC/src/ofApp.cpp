@@ -1,6 +1,7 @@
 #include "ofApp.h"
 #include "ofAppBaseWindow.h"
 
+#define MAX_OLD_FACES 30
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -46,10 +47,10 @@ void ofApp::setup(){
     gui.add(timeout.setup("timeout", 0, 0, 60));
 	gui.add(brightness.setup("brightness",50,0,150));
 	gui.add(contrast.setup("contrast",50,0,100));
-	gui.add(smoothAverage.setup("smoothAverage",10,1,30));
+	gui.add(smoothAverage.setup("smoothAverage",10,1,MAX_OLD_FACES));
 
 	//Setup OldsfacesVector
-	faces.assign(30,ofRectangle(1/2,1/2,0,0));
+	faces.assign(MAX_OLD_FACES,ofRectangle(1/2,1/2,0,0));
 
     // Load autosave (replace default parameters if file exists)
     if(ofFile::doesFileExist("autosave.xml")){
@@ -66,7 +67,6 @@ void ofApp::setup(){
     age = 0;
     face.set(0, 0, 0, 0);
     oldFace.set(0, 0, 0, 0);
-	centroid = ofVec3f(CAM_WIDTH/2,CAM_HEIGHT/2,0);
     trackingState = EMPTY;
 }
 
@@ -169,7 +169,7 @@ void ofApp::update(){
 			// Updating oldsFacesVector
 			faces.insert( faces.begin(),face);
 			faces.pop_back();
-			centroid =	SmoothFaceFromAVerage();
+			SmoothFaceFromAVerage();
         }
 		
 	}
@@ -271,7 +271,7 @@ void ofApp::drawCentroid(){
 	ofPushStyle();
     ofSetColor(255,0,0);
 	ofFill();
-    ofCircle(centroid.x, centroid.y, 10);
+	ofCircle(face.getCenter().x * CAM_WIDTH, face.getCenter().y * CAM_HEIGHT, 10);
 	ofPopStyle();
 }
 
@@ -290,19 +290,20 @@ void ofApp::drawOldsCentroids(){
 //Returning the position of the centroid depending of the olds positions using a weighted average
 //the more the position is old the more is coefficient is weak, using indice as coefficient
 //--------------------------------------------------------------
-ofVec3f ofApp::SmoothFaceFromAVerage(){
-	ofVec3f temporaryFace= ofVec3f(0,0,0);
-	float divide = 0;
-	for(int i = 0 ; i < smoothAverage ; i++){
-		temporaryFace.x = temporaryFace.x + faces[i].getCenter().x * (static_cast<float>(smoothAverage - i) / smoothAverage) * CAM_WIDTH;
-		temporaryFace.y = temporaryFace.y + faces[i].getCenter().y * (static_cast<float>(smoothAverage - i) / smoothAverage) * CAM_HEIGHT;
-		temporaryFace.z = temporaryFace.z + ((face.getHeight() * CAM_HEIGHT + face.getWidth() * CAM_WIDTH)/2) *
-											((static_cast<float>(smoothAverage - i) / smoothAverage));
-		divide = divide + (static_cast<float>(smoothAverage - i) / smoothAverage);
+void ofApp::SmoothFaceFromAVerage(){
+	ofVec2f temporaryFace= ofVec2f(0,0);
+	float divide = 0, w = 0, h = 0, coef = 0;
+	for(int i = 0; i < smoothAverage ; i++){
+		coef = ((static_cast<float>(smoothAverage - i) / smoothAverage));
+		temporaryFace.x = temporaryFace.x + faces[i].getCenter().x * coef * CAM_WIDTH;
+		temporaryFace.y = temporaryFace.y + faces[i].getCenter().y * coef * CAM_HEIGHT;											
+		w = w + faces[i].getWidth() * coef * CAM_WIDTH;
+		h = h + faces[i].getHeight() * coef * CAM_HEIGHT;
+		divide = divide + coef ;
 	}
-	temporaryFace.x = temporaryFace.x / divide ;
-	temporaryFace.y = temporaryFace.y / divide ;
-	temporaryFace.z = temporaryFace.z / divide ;
-
-	return temporaryFace;
+	temporaryFace.x = temporaryFace.x / (divide * CAM_WIDTH);
+	temporaryFace.y = temporaryFace.y / (divide * CAM_HEIGHT) ;
+	h = h / (divide * CAM_HEIGHT);
+	w = w / (divide * CAM_WIDTH);
+	face.setFromCenter(temporaryFace.x, temporaryFace.y, w, h);	
 }

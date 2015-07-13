@@ -15,7 +15,7 @@ public:
     void sendDataToOSC();
 	void drawCentroid();
 	void drawOldsCentroids();
-	ofVec3f SmoothFaceFromAVerage();
+	void SmoothFaceFromAVerage();
 
 
 
@@ -30,7 +30,6 @@ private:
 	ofxCvGrayscaleImage imgTransform;
     ofxCvHaarFinder finder;
     ofVideoGrabber cam;
-    ofVec3f centroid;
     ofRectangle face;
 	vector<ofRectangle> faces;
     ofRectangle oldFace;
