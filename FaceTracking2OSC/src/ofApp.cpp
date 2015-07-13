@@ -1,12 +1,11 @@
 #include "ofApp.h"
 #include "ofAppBaseWindow.h"
 
-//#define smoothAverage 10
 
 //--------------------------------------------------------------
 void ofApp::setup(){
 	// Setup face finder
-    finder.setup("haarcascade_frontalface_default.xml");
+    finder.setup("haarcascade_frontalface_alt2.xml");
 	
     // Setup camera
 	CAM_WIDTH=  640;
@@ -49,7 +48,7 @@ void ofApp::setup(){
 	gui.add(contrast.setup("contrast",50,0,100));
 	gui.add(smoothAverage.setup("smoothAverage",10,1,30));
 
-	//Setup facesVector
+	//Setup OldsfacesVector
 	faces.assign(30,ofRectangle(1/2,1/2,0,0));
 
     // Load autosave (replace default parameters if file exists)
@@ -81,16 +80,16 @@ void ofApp::update(){
 	if(cam.isFrameNew()) {
         // Get camera image
         ofImage img;	
-        
-		img.setFromPixels(cam.getPixelsRef());
+   		img.setFromPixels(cam.getPixelsRef());
 		
 		// Use resized image for better performance
         img.resize(CAM_WIDTH/scaleFactor, CAM_HEIGHT/scaleFactor);
 		
+		// Use of GrayScale image in order to transform more efficiently
 		img.setImageType(OF_IMAGE_GRAYSCALE);
 		imgTransform.setFromPixels(img.getPixelsRef());
-		imgTransform.contrastStretch();
 		imgTransform.brightnessContrast(static_cast<float>(brightness)/100,static_cast<float>(contrast)/100);
+		imgTransform.contrastStretch();
 
         // Find face
         finder.findHaarObjects(imgTransform, finderMinWidth/scaleFactor, finderMinHeight/scaleFactor);
@@ -163,7 +162,7 @@ void ofApp::update(){
                      smoothBound * oldFace.getWidth() + (1-smoothBound) * width,
                      smoothBound * oldFace.getHeight() + (1-smoothBound) * height);
 
-			// Updating facesVector
+			// Updating oldsFacesVector
 			faces.insert( faces.begin(),face);
 			faces.pop_back();
 			centroid =	SmoothFaceFromAVerage();
@@ -179,6 +178,7 @@ void ofApp::update(){
 void ofApp::draw(){
 	ofNoFill();
     
+	//Draw grayScale image once transformed
 	imgTransform.draw(0, 0, CAM_WIDTH, CAM_HEIGHT);
     	
     // Draw area around face if detected
@@ -191,7 +191,7 @@ void ofApp::draw(){
 		// Draw olds centroids
 		drawOldsCentroids();
 
-        // Draw FinalPoint
+        // Draw centroid
         drawCentroid();
     }
 
@@ -202,6 +202,7 @@ void ofApp::draw(){
 
 //--------------------------------------------------------------
 void ofApp::exit(){
+	//Save of the parameters
 	gui.saveToFile("autosave.xml");
 }
 
@@ -265,6 +266,7 @@ void ofApp::drawCentroid(){
 	ofPopStyle();
 }
 
+//--------------------------------------------------------------
 void ofApp::drawOldsCentroids(){
 	for(int i = smoothAverage-1; i > 0; --i){
 		ofPushStyle();
@@ -275,8 +277,11 @@ void ofApp::drawOldsCentroids(){
 	}
 }
 
+//--------------------------------------------------------------
+//Returning the position of the centroid depending of the olds positions using a weighted average
+//the more the position is old the more is coefficient is weak, using indice as coefficient
+//--------------------------------------------------------------
 ofVec3f ofApp::SmoothFaceFromAVerage(){
-
 	ofVec3f temporaryFace= ofVec3f(0,0,0);
 	float divide = 0;
 	for(int i = 0 ; i < smoothAverage ; i++){

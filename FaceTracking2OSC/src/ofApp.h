@@ -32,6 +32,7 @@ private:
     ofVideoGrabber cam;
     ofVec3f centroid;
     ofRectangle face;
+	vector<ofRectangle> faces;
     ofRectangle oldFace;
     
     int blobsNum;
@@ -58,7 +59,5 @@ private:
 	ofxIntSlider contrast;
 	ofxIntSlider brightness;
 	ofxIntSlider smoothAverage;
-
-	vector<ofRectangle> faces;
 
 };
