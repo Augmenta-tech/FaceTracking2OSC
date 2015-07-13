@@ -87,6 +87,7 @@ void ofApp::update(){
 		
 		// Use of GrayScale image in order to transform more efficiently
 		img.setImageType(OF_IMAGE_GRAYSCALE);
+        // Modify brightness and contrast to improve face detection
 		imgTransform.setFromPixels(img.getPixelsRef());
 		imgTransform.brightnessContrast(static_cast<float>(brightness)/100,static_cast<float>(contrast)/100);
 		imgTransform.contrastStretch();
@@ -96,6 +97,7 @@ void ofApp::update(){
 
 		// Update face position
         // Augmenta-like behavior : get state to send in OSC
+        // blobsNum is the number of blobs there was on last frame
         // Person entered
         if(blobsNum == 0 && finder.blobs.size() != 0){
             trackingState = PERSON_ENTERED;
@@ -112,9 +114,10 @@ void ofApp::update(){
         // Person left
         else if(blobsNum != 0 && finder.blobs.size() == 0){
             // Timeout before person is considered to have really left
+            // If no timeout, person left
             if(timeout == 0){
                 trackingState = PERSON_LEFT;
-            } else {
+            } else { // Else, wait for timeout
                 trackingState = PERSON_UPDATED;
             }
         }
@@ -130,11 +133,12 @@ void ofApp::update(){
             }
         }
         
-        // Update number of blobs
+        // Update number of blobs for next frame
         blobsNum = finder.blobs.size();
         
         // Update face position
         if(finder.blobs.size() != 0){
+            // get new face
             oldFace = face;
             ofRectangle newFace = finder.blobs[0].boundingRect;
             
@@ -221,6 +225,7 @@ void ofApp::sendDataToOSC(){
     // Send Augmenta-simulated data
     m.clear();
     
+    // Get person's state
     switch(trackingState){
         case PERSON_ENTERED:
             m.setAddress("/au/personEntered");
@@ -237,6 +242,10 @@ void ofApp::sendDataToOSC(){
         default:
             break;
     }
+    // Don't send data if no face detected
+    // For Augmenta compatibility : XYZ in Augmenta = XZY in FaceTracking2OSC
+    // The depth Z in FaceTracking2OSC is approximated with the height of the bounding rect around detected face,
+    // relative to window height. The deeper you are, the smaller the bounding rect will be.
     if(trackingState != EMPTY){
         m.addIntArg(pid);       // pid
         m.addIntArg(0);         // oid
