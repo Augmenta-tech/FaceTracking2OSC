@@ -17,8 +17,6 @@ public:
 	void drawOldsCentroids();
 	void SmoothFaceFromAVerage();
 
-
-
 private:
     int pid;
     int age;

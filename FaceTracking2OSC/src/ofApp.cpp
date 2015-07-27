@@ -2,6 +2,7 @@
 #include "ofAppBaseWindow.h"
 
 #define MAX_OLD_FACES 30
+#define PORT 12000
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -36,7 +37,7 @@ void ofApp::setup(){
     gui.setup();
     gui.add(uiFramerate.setup("FPS", framerate));
     gui.add(uiHost.setup("oscHost", "127.0.0.1"));
-    gui.add(uiPort.setup("oscPort", ofToString(12000)));
+    gui.add(uiPort.setup("oscPort", ofToString(PORT)));
     gui.add(scaleFactor.setup("scaleFactor", 4, 1, 8));
     gui.add(smoothPos.setup("smoothPos Exp", 0.2, 0, 1));
     gui.add(thresholdPos.setup("thresholdPos", 0.2, 0, 0.1));
@@ -93,7 +94,7 @@ void ofApp::update(){
 		imgTransform.contrastStretch();
 
         // Find face
-        finder.findHaarObjects(imgTransform, finderMinWidth/scaleFactor, finderMinHeight/scaleFactor);
+        finder.findHaarObjects(imgTransform, finderMinWidth/scaleFactor, finderMinHeight/scaleFactor);	
 
 		// Update face position
         // Augmenta-like behavior : get state to send in OSC
@@ -196,7 +197,7 @@ void ofApp::draw(){
 		drawOldsCentroids();
 
         // Draw centroid
-        drawCentroid();
+        drawCentroid();		
     }
 
     // Draw GUI
